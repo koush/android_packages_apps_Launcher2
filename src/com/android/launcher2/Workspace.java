@@ -55,7 +55,6 @@ public class Workspace extends ViewGroup implements DropTarget, DragSource, Drag
     /**
      * The velocity at which a fling gesture will cause us to snap to the next screen
      */
-	// Faruq: Modified SNAP_VELOCITY to make it less harsh
     private static final int SNAP_VELOCITY = 200;
 
     private final WallpaperManager mWallpaperManager;
@@ -846,6 +845,14 @@ public class Workspace extends ViewGroup implements DropTarget, DragSource, Drag
         }
     }
 
+    public void hideWallpaper(boolean hide) {
+        if (hide)
+        mWallpaperManager.sendWallpaperCommand(getWindowToken(),
+            "hide", 0, 0, 0, null);
+    else
+        mWallpaperManager.sendWallpaperCommand(getWindowToken(),
+            "show", 0, 0, 0, null);
+    }
     void enableChildrenCache(int fromScreen, int toScreen) {
         if (fromScreen > toScreen) {
             fromScreen = toScreen;
@@ -1058,7 +1065,7 @@ public class Workspace extends ViewGroup implements DropTarget, DragSource, Drag
         mScroller.startScroll(mScrollX, 0, delta, 0, duration);
         invalidate();
     }
-
+    
     void startDrag(CellLayout.CellInfo cellInfo) {
         View child = cellInfo.cell;
         
