@@ -100,7 +100,7 @@ public class LauncherPreferenceActivity extends PreferenceActivity {
 
 	private int getScreenSize() {
 		SharedPreferences mPrefs = mScreenSize.getSharedPreferences();
-		return mPrefs.getInt(LauncherPreferenceActivity.LAUNCHER2_SCREEN_SIZE, 7);
+		return mPrefs.getInt(LauncherPreferenceActivity.LAUNCHER2_SCREEN_SIZE, 5);
 	}
 
 	private void setScreenSizeDisplay() {
