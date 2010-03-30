@@ -593,7 +593,7 @@ public class LauncherProvider extends ContentProvider {
                     values.put(LauncherSettings.Favorites.CONTAINER,
                             LauncherSettings.Favorites.CONTAINER_DESKTOP);
                     values.put(LauncherSettings.Favorites.SCREEN,
-                            a.getString(R.styleable.Favorite_screen));
+                            ((Integer)(Integer.parseInt(a.getString(R.styleable.Favorite_screen)) + 1)).toString());
                     values.put(LauncherSettings.Favorites.CELLX,
                             a.getString(R.styleable.Favorite_x));
                     values.put(LauncherSettings.Favorites.CELLY,
