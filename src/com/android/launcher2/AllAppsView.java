@@ -121,12 +121,14 @@ public class AllAppsView extends RSSurfaceView
     private float mVelocity;
     private AAMessage mMessageProc;
 
+    private boolean mCreatedList = false;
+
     static class Defines {
         public static final int ALLOC_PARAMS = 0;
         public static final int ALLOC_STATE = 1;
         public static final int ALLOC_ICON_IDS = 3;
 
-        public static final int COLUMNS_PER_PAGE = 4;
+        public static final int COLUMNS_PER_PAGE = 5;
         public static final int ROWS_PER_PAGE = 4;
 
         public static final int ICON_TEXTURE_WIDTH_PX = 128;
@@ -305,6 +307,11 @@ public class AllAppsView extends RSSurfaceView
         if (!isVisible()) {
             return false;
         }
+
+	if (mRollo == null) {
+            return false;
+        }
+
         final int iconCount = mRollo.mState.iconCount;
 
         if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -1088,6 +1095,15 @@ public class AllAppsView extends RSSurfaceView
             mIcons = new Allocation[count];
             mIconIds = new int[allocCount];
             mAllocIconIds = Allocation.createSized(mRS, Element.USER_I32(mRS), allocCount);
+	    if (mLauncher.isInitialCreation()) {
+	        Allocation.createAllocationList(mRS, count);
+		if (count > 0)
+		    mCreatedList = true;
+            }
+	    else {
+		if (count > 0)
+		    mCreatedList = true;
+            }
 
             Element ie8888 = Element.RGBA_8888(mRS);
 
@@ -1141,8 +1157,12 @@ public class AllAppsView extends RSSurfaceView
 
         private void createAppIconAllocations(int index, ApplicationInfo item) {
             Bitmap bitmap = item.iconBitmap;
-            mIcons[index] = Allocation.createFromBitmap(mRS, bitmap, Element.RGBA_8888(mRS), true);
-            frameBitmapAllocMips(mIcons[index], bitmap.getWidth(), bitmap.getHeight());
+	    if (mLauncher.isInitialCreation()) {
+                mIcons[index] = Allocation.createFromBitmap(mRS, bitmap, Element.RGBA_8888(mRS), true, index);
+                frameBitmapAllocMips(mIcons[index], bitmap.getWidth(), bitmap.getHeight());
+	    }
+	    else
+                mIcons[index] = Allocation.createFromBitmap(mRS, bitmap, Element.RGBA_8888(mRS), true, index);
 
             mIconIds[index] = mIcons[index].getID();
         }
@@ -1185,6 +1205,7 @@ public class AllAppsView extends RSSurfaceView
             System.arraycopy(mIcons, index, mIcons, dest, count);
             System.arraycopy(mIconIds, index, mIconIds, dest, count);
 
+	    Allocation.addToAllocation(mRS, index);
             createAppIconAllocations(index, item);
 
             if (mHasSurface) {
@@ -1205,6 +1226,8 @@ public class AllAppsView extends RSSurfaceView
 
             System.arraycopy(mIcons, src, mIcons, index, count);
             System.arraycopy(mIconIds, src, mIconIds, index, count);
+
+	    Allocation.removeFromAllocation(mRS, index);
 
             mRollo.mState.iconCount--;
             final int last = mState.iconCount;
@@ -1248,12 +1271,9 @@ public class AllAppsView extends RSSurfaceView
             mTouchYBorders[3] = centerY + cellHeight;
             mTouchYBorders[4] = centerY + (cellHeight * 2);
 
-            int centerX = (width / 2);
-            mTouchXBorders[0] = 0;
-            mTouchXBorders[1] = centerX - (width / 4);
-            mTouchXBorders[2] = centerX;
-            mTouchXBorders[3] = centerX + (width / 4);
-            mTouchXBorders[4] = width;
+           for (int i = 0; i < (Defines.COLUMNS_PER_PAGE+1); i++) {
+                mTouchXBorders[i] = i * cellWidth;
+            }
         }
 
         void fling() {
@@ -1271,8 +1291,6 @@ public class AllAppsView extends RSSurfaceView
         }
 
         int chooseTappedIcon(int x, int y, float pos) {
-            // Adjust for scroll position if not zero.
-            y += (pos - ((int)pos)) * (mTouchYBorders[1] - mTouchYBorders[0]);
 
             int col = -1;
             int row = -1;
@@ -1293,8 +1311,7 @@ public class AllAppsView extends RSSurfaceView
                 return -1;
             }
 
-            int index = (((int)pos) * Defines.COLUMNS_PER_PAGE)
-                    + (row * Defines.ROWS_PER_PAGE) + col;
+            int index = ((row + (int)pos) * Defines.COLUMNS_PER_PAGE) + col;
 
             if (index >= mState.iconCount) {
                 return -1;
@@ -1414,6 +1431,10 @@ public class AllAppsView extends RSSurfaceView
             Log.d(TAG, "mRollo.mParams.homeButtonTextureWidth=" + mParams.homeButtonTextureWidth);
             Log.d(TAG, "mRollo.mParams.homeButtonTextureHeight=" + mParams.homeButtonTextureHeight);
         }
+    }
+
+    public boolean IsAllocationListCreated() {
+        return mCreatedList;
     }
 
     public void dumpState() {
